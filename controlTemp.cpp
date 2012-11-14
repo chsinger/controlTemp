@@ -18,11 +18,15 @@ using namespace std;
 
 int main (void) {
 
-	tempSensor sens1, sens2("28-000004071f35");
-	sens1.setId("28-000003c31d58");
+	tempSensor sens1("28-000003c31d58"), sens2("28-000004071f35"),
+							sens3("28-0000040743a0");
 
-	cout << "Temp1: " << sens1.getTemp() << endl;
-	cout << "Temp2: " << sens2.getTemp() << endl;
+	while (1) {
+
+		cout << "Temp1: " << sens1.getTemp() << " Temp2: " << sens2.getTemp()
+			<< " Temp3: " << sens3.getTemp() << endl;
+		sleep(5);
+	}
 
 }
 
