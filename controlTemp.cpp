@@ -24,7 +24,7 @@ using namespace std;
 
 int main (void) {
 
-	int rrd_argc=4;
+	int rrd_argc=3;
 	char *rrd_argv[rrd_argc];
 	float temp1, temp2, temp3;
 	int ret;
@@ -45,15 +45,18 @@ int main (void) {
 
 		if ( sens1.getLastTemp() != 0.0 && ( temp1 < sens1.getLastTemp() - 5 || temp1 > sens1.getLastTemp() + 5 )) { 
 			temp1 = sens1.getLastTemp();
+			sens1.setLastTemp(temp1);
 		} 
 		if ( sens2.getLastTemp() != 0.0 && ( temp2 < sens2.getLastTemp() - 5 || temp2 > sens2.getLastTemp() + 5 )) { 
 			temp2 = sens2.getLastTemp();
+			sens2.setLastTemp(temp2);
 		} 
 		if ( sens3.getLastTemp() != 0.0 && ( temp3 < sens3.getLastTemp() - 5 || temp3 > sens3.getLastTemp() + 5 )) { 
 			temp3 = sens3.getLastTemp();
+			sens3.setLastTemp(temp3);
 		} 
 
-		stream << "N:" << temp1 << ":" << temp2 << ":" << temp3;
+		stream << "N:" << temp1 << ":" << temp2 << ":" << temp3 << ends;
 
 		rrd_argv[2] = new char[stream.str().size()];
 		
@@ -64,6 +67,7 @@ int main (void) {
 /*		cout << "Temp1: " << temp1 << " Temp2: " << temp2
 			<< " Temp3: " << temp3 << " Ret: " << ret << " Stream: " << rrd_argv[2] <<  endl;
 */
+
 		stream.str("");
 		stream.clear();
 
