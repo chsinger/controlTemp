@@ -7,11 +7,13 @@
 
 
 #include <iostream>
+#include <fstream>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <sstream>
 #include <vector>
+#include <ctime>
 
 
 extern "C" {
@@ -29,11 +31,7 @@ void writeRrd (float temp1, float temp2, float temp3) {
 	int rrd_argc=3;
 	char *rrd_argv[rrd_argc];
 	stringstream stream;
-//	rrd_argv[0]= new char[6];
-//	strcpy(rrd_argv[0],"update\0");
 	rrd_argv[0]="update";
-//	rrd_argv[1]= new char[36];
-//	strcpy(rrd_argv[1],"/home/pi/stuff/readTemp/tempGrow.rrd\0");
 	rrd_argv[1]="/home/pi/stuff/readTemp/tempGrow.rrd";
 
 	stream << "N:" << temp1 << ":" << temp2 << ":" << temp3 << ends;
@@ -43,31 +41,36 @@ void writeRrd (float temp1, float temp2, float temp3) {
 	
 
  	int ret = rrd_update(rrd_argc,rrd_argv);
-//	cout << ret << " " <<rrd_argv[0] << " " << rrd_argv[1] << " " <<  "String: " << rrd_argv[2] << endl;
 
 	stream.str("");
 	stream.clear();
-
-//	for ( int i = 0; i < rrd_argc; i++)
-//		delete[] rrd_argv[i];			
 
 		delete[] rrd_argv[2];
 }
 
 int main (void) {
 
+	ofstream logfile;
+	logfile.open ("controlTemp.log");
+	
+	char date[256];
+	time_t rawtime;
+	struct tm *tmp;
+
+	int onoff = 0;
+
 	wiringPiSetup();
 	RCSwitch heizmatte = RCSwitch();
 	heizmatte.enableTransmit(1);
 
 	float temp1, temp2, temp3;
-	vector<tempSensor> tempSensors;
+//	vector<tempSensor> tempSensors;
 	tempSensor sens1("28-000003c31d58"), sens2("28-000004071f35"),
 							sens3("28-0000040743a0");
 
-	tempSensors.push_back(sens1);
-	tempSensors.push_back(sens2);
-	tempSensors.push_back(sens3);
+//	tempSensors.push_back(sens1);
+//	tempSensors.push_back(sens2);
+//	tempSensors.push_back(sens3);
 
 
 	while (1) {
@@ -78,31 +81,7 @@ int main (void) {
 		temp2 = sens2.getTemp();
 		temp3 = sens3.getTemp();
 
-/*
-		if ( sens1.getLastTemp() != 0.0 && ( temp1 < sens1.getLastTemp() - 5 || temp1 > sens1.getLastTemp() + 5 )) { 
-			cout << "Before: Temp1: " << temp1 << " Last-Temp: " << sens1.getLastTemp() << endl;
-			temp1 = sens1.getLastTemp();
-			sens1.setLastTemp(temp1);
-			cout << "After:  Temp1: " << temp1 << " Last-Temp: " << sens1.getLastTemp() << endl;
-		} 
-		if ( sens2.getLastTemp() != 0.0 && ( temp2 < sens2.getLastTemp() - 5 || temp2 > sens2.getLastTemp() + 5 )) { 
-			cout << "Before: Temp2: " << temp2 << " Last-Temp: " << sens2.getLastTemp() << endl;
-			temp2 = sens2.getLastTemp();
-			sens2.setLastTemp(temp2);
-			cout << "After:  Temp2: " << temp1 << " Last-Temp: " << sens2.getLastTemp() << endl;
-		} 
-		if ( sens3.getLastTemp() != 0.0 && ( temp3 < sens3.getLastTemp() - 5 || temp3 > sens3.getLastTemp() + 5 )) { 
-			cout << "Before: Temp3: " << temp3 << " Last-Temp: " << sens3.getLastTemp() << endl;
-			temp3 = sens3.getLastTemp();
-			sens3.setLastTemp(temp3);
-			cout << "After:  Temp3: " << temp3 << " Last-Temp: " << sens3.getLastTemp() << endl;
-		} 
-*/
 
-
-/*		cout << "Temp1: " << temp1 << " Temp2: " << temp2
-			<< " Temp3: " << temp3 << " Ret: " <<  endl;
-*/	
 /*		for (vector<tempSensor>::iterator it = tempSensors.begin(); it != tempSensors.end(); ++it ) {
 			cout << it->getTemp() << endl;
 		}		
@@ -110,15 +89,31 @@ int main (void) {
 
 	writeRrd(temp1, temp2, temp3);
 
-	if ( temp1 >= 28 ) 
+	time (&rawtime);
+	//theTime = ctime(&rawtime);
+	//theTime.erase(theTime.find('\n', 0), 1);
+	tmp = localtime(&rawtime);
+	strftime(date, sizeof(date),"%Y/%m/%d %X", tmp);
+
+	if ( temp1 >= 31 ) { 
 		heizmatte.switchOff("11111",3);
-	else if ( temp1 <= 26 ) 
+		if ( onoff == 1 ) {
+			logfile << date << " switched off at temp: " << temp1 << endl;
+			onoff = 0;
+		}
+	}	
+	else if ( temp1 <= 29 ) { 
 		heizmatte.switchOn("11111",3);
+		if ( onoff == 0 ) {
+			logfile << date << " switched on at temp: " << temp1 << endl;
+			onoff = 1;
+		}
+	}	
 		
-
-
-		sleep(1);
+		sleep(10);
 	}
+
+	logfile.close();
 
 }
 
