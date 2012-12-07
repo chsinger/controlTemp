@@ -12,7 +12,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <sstream>
-#include <vector>
+//#include <vector>
 #include <ctime>
 
 
@@ -48,14 +48,25 @@ void writeRrd (float temp1, float temp2, float temp3) {
 		delete[] rrd_argv[2];
 }
 
-int main (void) {
+string getTimestamp() {
 
-	ofstream logfile;
-	logfile.open ("controlTemp.log");
-	
 	char date[256];
 	time_t rawtime;
 	struct tm *tmp;
+
+	time (&rawtime);
+	tmp = localtime(&rawtime);
+	strftime(date, sizeof(date),"%Y/%m/%d %X", tmp);
+
+	return date;
+
+}
+
+int main (void) {
+
+	ofstream logfile;
+	logfile.open ("controlTemp.log", ios::app);
+	
 
 	int onoff = 0;
 
@@ -73,6 +84,8 @@ int main (void) {
 //	tempSensors.push_back(sens3);
 
 
+	logfile << getTimestamp() << " Started control" << endl;
+
 	while (1) {
 
 
@@ -89,23 +102,17 @@ int main (void) {
 
 	writeRrd(temp1, temp2, temp3);
 
-	time (&rawtime);
-	//theTime = ctime(&rawtime);
-	//theTime.erase(theTime.find('\n', 0), 1);
-	tmp = localtime(&rawtime);
-	strftime(date, sizeof(date),"%Y/%m/%d %X", tmp);
-
-	if ( temp1 >= 31 ) { 
+	if ( temp1 >= 31.00 ) { 
 		heizmatte.switchOff("11111",3);
 		if ( onoff == 1 ) {
-			logfile << date << " switched off at temp: " << temp1 << endl;
+			logfile << getTimestamp() << " Switched off at temperature: " << temp1 << endl;
 			onoff = 0;
 		}
 	}	
-	else if ( temp1 <= 29 ) { 
+	else if ( temp1 <= 29.00 ) { 
 		heizmatte.switchOn("11111",3);
 		if ( onoff == 0 ) {
-			logfile << date << " switched on at temp: " << temp1 << endl;
+			logfile << getTimestamp() << " Switched on at temperature: " << temp1 << endl;
 			onoff = 1;
 		}
 	}	
@@ -113,6 +120,10 @@ int main (void) {
 		sleep(10);
 	}
 
+
+
+	logfile << getTimestamp() << " Stopped control" << endl;
+	
 	logfile.close();
 
 }
