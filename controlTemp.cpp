@@ -102,14 +102,14 @@ int main (void) {
 
 	writeRrd(temp1, temp2, temp3);
 
-	if ( temp1 >= 31.00 ) { 
+	if ( temp1 >= 30.50 ) { 
 		heizmatte.switchOff("11111",3);
 		if ( onoff == 1 ) {
 			logfile << getTimestamp() << " Switched off at temperature: " << temp1 << endl;
 			onoff = 0;
 		}
 	}	
-	else if ( temp1 <= 29.00 ) { 
+	else if ( temp1 <= 30.00 ) { 
 		heizmatte.switchOn("11111",3);
 		if ( onoff == 0 ) {
 			logfile << getTimestamp() << " Switched on at temperature: " << temp1 << endl;
