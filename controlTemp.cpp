@@ -62,6 +62,23 @@ string getTimestamp() {
 
 }
 
+int getHour() {
+
+	char hour[3];
+	time_t rawtime;
+	struct tm *tmp;
+
+	time (&rawtime);
+	tmp = localtime(&rawtime);
+	strftime(hour, sizeof(hour),"%H", tmp);
+
+	stringstream ss(hour);
+	int retHour; 
+	ss >> retHour;
+	return retHour;
+
+}
+
 int main (void) {
 
 	ofstream logfile;
@@ -69,6 +86,7 @@ int main (void) {
 	
 
 	int onoff = 0;
+	float targetTemp = 28.00f;
 
 	wiringPiSetup();
 	RCSwitch heizmatte = RCSwitch();
@@ -102,15 +120,34 @@ int main (void) {
 
 	writeRrd(temp1, temp2, temp3);
 
-	if ( temp1 >= 30.50 ) { 
-		heizmatte.switchOff("11111",3);
+	if ( ( 06 <= getHour()) && ( getHour() < 21 )) {
+		heizmatte.switchOn("11111",4);
+	}
+	else if ( ( (( 21 <= getHour() ) && ( getHour() <= 24 )) || (( 00 <= getHour() ) && ( getHour() < 06 ))) ) {
+		heizmatte.switchOff("11111",4);
+	}
+
+
+	sleep(2);
+
+	cout << "Temp: " << temp1 <<" Target: " << targetTemp  << endl;
+
+	if ( temp1 >= 30 ) 
+		digitalWrite(6, 1);
+	else
+		digitalWrite(6, 0);
+
+	if ( temp1 >= targetTemp ) { 
+		heizmatte.switchOff("11111",5);
+		cout << "switch off" << endl;
 		if ( onoff == 1 ) {
 			logfile << getTimestamp() << " Switched off at temperature: " << temp1 << endl;
 			onoff = 0;
 		}
 	}	
-	else if ( temp1 <= 30.00 ) { 
-		heizmatte.switchOn("11111",3);
+	else if ( temp1 <= targetTemp - 0.05 ) { 
+		heizmatte.switchOn("11111",5);
+		cout << "switch on" << endl;
 		if ( onoff == 0 ) {
 			logfile << getTimestamp() << " Switched on at temperature: " << temp1 << endl;
 			onoff = 1;
